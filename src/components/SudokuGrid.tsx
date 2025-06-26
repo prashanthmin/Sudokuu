@@ -25,7 +25,7 @@ export function SudokuGrid({
   };
 
   return (
-    <div className="grid grid-cols-9 gap-px bg-gray-300 p-px rounded-lg shadow-lg">
+    <div className="grid grid-cols-9 gap-px bg-gray-300 p-px rounded-lg shadow-lg max-w-full sm:w-auto mx-auto">
       {grid.map((row, rowIndex) =>
         row.map((cell, colIndex) => {
           const isOriginal = originalGrid[rowIndex][colIndex] !== null;
@@ -39,31 +39,55 @@ export function SudokuGrid({
             colIndex % 3 === 0 ? 'border-l-2 border-gray-700' : '',
             rowIndex === 8 ? 'border-b-2 border-gray-700' : '',
             colIndex === 8 ? 'border-r-2 border-gray-700' : '',
+            'border border-gray-400' // Add a clear border for each cell
           ].join(' ');
+
+          // Highlight the 3x3 box if the selected cell is in the same box
+          let highlightBox = false;
+          if (selectedCell) {
+            const selectedBoxRow = Math.floor(selectedCell.row / 3);
+            const selectedBoxCol = Math.floor(selectedCell.col / 3);
+            if (
+              Math.floor(rowIndex / 3) === selectedBoxRow &&
+              Math.floor(colIndex / 3) === selectedBoxCol
+            ) {
+              highlightBox = true;
+            }
+          }
 
           return (
             <div
               key={`${rowIndex}-${colIndex}`}
               className={cn(
-                'w-12 h-12 flex items-center justify-center bg-white',
+                'w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center bg-white transition-all duration-150',
                 isEvenBox ? 'bg-opacity-100' : 'bg-opacity-50',
-                isSelected && 'ring-2 ring-blue-500',
+                isSelected && 'ring-2 ring-blue-500 z-10',
                 isOriginal ? 'font-bold text-black' : 'text-blue-600',
-                borderClasses
+                borderClasses,
+                highlightBox && 'bg-yellow-100'
               )}
               onClick={() => onCellSelect({ row: rowIndex, col: colIndex })}
+              tabIndex={0}
+              role="button"
+              aria-label={`Cell ${rowIndex + 1}, ${colIndex + 1}`}
             >
               <input
-                type="text"
+                type="tel"
+                inputMode="numeric"
+                pattern="[1-9]"
                 value={cell === null ? '' : cell.toString()}
                 onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
                 className={cn(
-                  'w-full h-full text-center focus:outline-none',
-                  isOriginal && 'bg-transparent cursor-not-allowed'
+                  'w-full h-full text-center focus:outline-none bg-transparent',
+                  isOriginal && 'cursor-not-allowed',
+                  'text-lg sm:text-xl',
+                  'appearance-none',
+                  'select-none'
                 )}
                 disabled={isOriginal}
                 maxLength={1}
-                pattern="[1-9]"
+                autoComplete="off"
+                aria-label={`Input for cell ${rowIndex + 1}, ${colIndex + 1}`}
               />
             </div>
           );
