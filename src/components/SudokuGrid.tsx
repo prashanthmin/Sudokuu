@@ -8,6 +8,7 @@ interface SudokuGridProps {
   selectedCell: Position | null;
   onCellSelect: (position: Position) => void;
   onCellChange: (position: Position, value: number | null) => void;
+  incorrectCells?: { [key: string]: boolean };
 }
 
 export function SudokuGrid({
@@ -15,7 +16,8 @@ export function SudokuGrid({
   originalGrid,
   selectedCell,
   onCellSelect,
-  onCellChange
+  onCellChange,
+  incorrectCells = {}
 }: SudokuGridProps) {
   const handleCellChange = (row: number, col: number, value: string) => {
     const numValue = value === '' ? null : parseInt(value, 10);
@@ -55,6 +57,9 @@ export function SudokuGrid({
             }
           }
 
+          // Check if this cell is incorrect
+          const isIncorrect = incorrectCells[`${rowIndex},${colIndex}`];
+
           return (
             <div
               key={`${rowIndex}-${colIndex}`}
@@ -82,7 +87,8 @@ export function SudokuGrid({
                   isOriginal && 'cursor-not-allowed',
                   'text-lg sm:text-xl',
                   'appearance-none',
-                  'select-none'
+                  'select-none',
+                  isIncorrect && 'text-red-600 font-bold'
                 )}
                 disabled={isOriginal}
                 maxLength={1}

@@ -26,6 +26,11 @@ function App() {
   });
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
+  // Track incorrect cells
+  const [incorrectCells, setIncorrectCells] = useState<{[key: string]: boolean}>({});
+  // Track hints used
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const MAX_HINTS = 5;
 
   useEffect(() => {
     if (isSudokuSolved(grid)) {
@@ -46,6 +51,8 @@ function App() {
     setSelectedCell(null);
     setAttempts(0);
     setError(null);
+    setIncorrectCells({});
+    setHintsUsed(0);
   }, []);
 
   const handleSolve = useCallback(() => {
@@ -57,6 +64,7 @@ function App() {
     const solution = solveSudoku(grid);
     if (solution) {
       setGrid(solution);
+      setIncorrectCells({});
     } else {
       setError('No solution exists for the current puzzle!');
     }
@@ -67,9 +75,15 @@ function App() {
     setSelectedCell(null);
     setAttempts(0);
     setError(null);
+    setIncorrectCells({});
+    setHintsUsed(0);
   }, [originalGrid]);
 
   const handleHint = useCallback(() => {
+    if (hintsUsed >= MAX_HINTS) {
+      setError('No more hints available!');
+      return;
+    }
     if (!selectedCell) {
       setError('Please select a cell first!');
       return;
@@ -85,7 +99,16 @@ function App() {
     const newGrid = grid.map(r => [...r]);
     newGrid[row][col] = solution[row][col];
     setGrid(newGrid);
-  }, [grid, selectedCell]);
+    setHintsUsed(prev => prev + 1);
+    setError(null);
+    // Remove incorrect marking if hint is used
+    setIncorrectCells(prev => {
+      const key = `${row},${col}`;
+      const updated = { ...prev };
+      delete updated[key];
+      return updated;
+    });
+  }, [grid, selectedCell, hintsUsed]);
 
   const handleCellSelect = useCallback((position: Position) => {
     setSelectedCell(position);
@@ -103,11 +126,18 @@ function App() {
 
     // Check if the move is valid
     const solution = solveSudoku(originalGrid);
+    const key = `${row},${col}`;
     if (solution && value !== null && value !== solution[row][col]) {
       setAttempts(prev => prev + 1);
       setError(`Wrong number! ${MAX_ATTEMPTS - attempts - 1} attempts remaining.`);
+      setIncorrectCells(prev => ({ ...prev, [key]: true }));
     } else {
       setError(null);
+      setIncorrectCells(prev => {
+        const updated = { ...prev };
+        delete updated[key];
+        return updated;
+      });
     }
 
     setGrid(newGrid);
@@ -135,6 +165,7 @@ function App() {
             Attempts remaining: {MAX_ATTEMPTS - attempts}
           </p>
           <p className="mt-2 text-blue-700 font-semibold">Games played: {gamesPlayed}</p>
+          <p className="mt-2 text-purple-700 font-semibold">Hints remaining: {MAX_HINTS - hintsUsed}</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-8">
@@ -145,6 +176,7 @@ function App() {
               selectedCell={selectedCell}
               onCellSelect={handleCellSelect}
               onCellChange={handleCellChange}
+              incorrectCells={incorrectCells}
             />
             <Controls
               onNewGame={handleNewGame}
@@ -161,6 +193,7 @@ function App() {
           <p>Use numbers 1-9. Empty cells can be cleared by deleting the number.</p>
           <p>Click a cell and press the hint button to reveal its correct value.</p>
           <p>You have {MAX_ATTEMPTS} attempts to solve the puzzle.</p>
+          <p>You have {MAX_HINTS} hints per game.</p>
         </div>
       </div>
     </div>

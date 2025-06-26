@@ -118,17 +118,53 @@ function removeCells(grid: Grid, difficulty: Difficulty): Grid {
     medium: 50,
     hard: 60
   }[difficulty];
-  
+
   let removed = 0;
-  while (removed < cellsToRemove) {
+  let attempts = 0;
+  const maxAttempts = 1000;
+  while (removed < cellsToRemove && attempts < maxAttempts) {
     const row = Math.floor(Math.random() * 9);
     const col = Math.floor(Math.random() * 9);
-    
+
     if (puzzle[row][col] !== null) {
+      const backup = puzzle[row][col];
       puzzle[row][col] = null;
-      removed++;
+      // Check for unique solution
+      if (countSolutions(puzzle) === 1) {
+        removed++;
+      } else {
+        puzzle[row][col] = backup;
+      }
+      attempts++;
     }
   }
-  
+
   return puzzle;
+}
+
+// Helper to count number of solutions for a puzzle
+function countSolutions(grid: Grid): number {
+  let count = 0;
+  const puzzle = grid.map(row => [...row]);
+  function solveCount(g: Grid): boolean {
+    const empty = findEmptyCell(g);
+    if (!empty) {
+      count++;
+      return count > 1; // Stop if more than one solution
+    }
+    const [row, col] = empty;
+    for (let num = 1; num <= 9; num++) {
+      if (isValidMove(g, row, col, num)) {
+        g[row][col] = num;
+        if (solveCount(g)) {
+          g[row][col] = null;
+          return true;
+        }
+        g[row][col] = null;
+      }
+    }
+    return false;
+  }
+  solveCount(puzzle);
+  return count;
 }
