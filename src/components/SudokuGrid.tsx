@@ -33,6 +33,14 @@ export function SudokuGrid({
           const boxIndex = Math.floor(rowIndex / 3) * 3 + Math.floor(colIndex / 3);
           const isEvenBox = boxIndex % 2 === 0;
 
+          // Add thick borders for 3x3 boxes
+          const borderClasses = [
+            rowIndex % 3 === 0 ? 'border-t-2 border-gray-700' : '',
+            colIndex % 3 === 0 ? 'border-l-2 border-gray-700' : '',
+            rowIndex === 8 ? 'border-b-2 border-gray-700' : '',
+            colIndex === 8 ? 'border-r-2 border-gray-700' : '',
+          ].join(' ');
+
           return (
             <div
               key={`${rowIndex}-${colIndex}`}
@@ -40,7 +48,8 @@ export function SudokuGrid({
                 'w-12 h-12 flex items-center justify-center bg-white',
                 isEvenBox ? 'bg-opacity-100' : 'bg-opacity-50',
                 isSelected && 'ring-2 ring-blue-500',
-                isOriginal ? 'font-bold text-black' : 'text-blue-600'
+                isOriginal ? 'font-bold text-black' : 'text-blue-600',
+                borderClasses
               )}
               onClick={() => onCellSelect({ row: rowIndex, col: colIndex })}
             >
